@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Map, Marker } from 'pigeon-maps';
-import { 
-  Package, 
-  PlusCircle, 
-  History, 
-  AlertCircle, 
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Map, Marker } from "pigeon-maps";
+import {
+  Package,
+  PlusCircle,
+  History,
+  AlertCircle,
   CheckCircle2,
   RefreshCw,
   ShoppingCart,
@@ -23,70 +23,81 @@ import {
   Lock,
   LogOut,
   Eye,
-  EyeOff
-} from 'lucide-react';
-import './App.css';
+  EyeOff,
+} from "lucide-react";
+import "./App.css";
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = "https://bd2-0e8g.onrender.com/api";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminUser, setAdminUser] = useState(null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [isLoginLoading, setIsLoginLoading] = useState(false);
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  // Start with password visible so users can verify typing immediately
+  const [showLoginPassword, setShowLoginPassword] = useState(true);
 
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [inventory, setInventory] = useState([]);
   const [stockLogs, setStockLogs] = useState([]);
   const [users, setUsers] = useState([]);
   const [analysisData, setAnalysisData] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('all');
+  const [selectedUserId, setSelectedUserId] = useState("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [mapCenter, setMapCenter] = useState([-1.286389, 36.817223]); // Default Nairobi
 
   // Analysis specific filters
-  const [analysisRegionFilter, setAnalysisRegionFilter] = useState('all');
-  const [analysisSearch, setAnalysisSearch] = useState('');
+  const [analysisRegionFilter, setAnalysisRegionFilter] = useState("all");
+  const [analysisSearch, setAnalysisSearch] = useState("");
 
   // Map-specific filters
-  const [mapRegionFilter, setMapRegionFilter] = useState('all');
-  const [mapShopFilter, setMapShopFilter] = useState('all');
+  const [mapRegionFilter, setMapRegionFilter] = useState("all");
+  const [mapShopFilter, setMapShopFilter] = useState("all");
 
   // Derived filtered users for the map
-  const filteredMapUsers = users.filter(user => {
-    const regionMatch = mapRegionFilter === 'all' || user.region === mapRegionFilter;
-    const shopMatch = mapShopFilter === 'all' || user.id.toString() === mapShopFilter;
+  const filteredMapUsers = users.filter((user) => {
+    const regionMatch =
+      mapRegionFilter === "all" || user.region === mapRegionFilter;
+    const shopMatch =
+      mapShopFilter === "all" || user.id.toString() === mapShopFilter;
     return regionMatch && shopMatch;
   });
 
   // Derived filtered analysis data
-  const filteredAnalysis = analysisData.filter(item => {
-    const regionMatch = analysisRegionFilter === 'all' || item.region === analysisRegionFilter;
-    const searchMatch = item.productName.toLowerCase().includes(analysisSearch.toLowerCase()) || 
-                       item.shopName.toLowerCase().includes(analysisSearch.toLowerCase());
+  const filteredAnalysis = analysisData.filter((item) => {
+    const regionMatch =
+      analysisRegionFilter === "all" || item.region === analysisRegionFilter;
+    const searchMatch =
+      item.productName.toLowerCase().includes(analysisSearch.toLowerCase()) ||
+      item.shopName.toLowerCase().includes(analysisSearch.toLowerCase());
     return regionMatch && searchMatch;
   });
 
   // Extract unique regions for the filter
-  const uniqueRegions = [...new Set(users.map(user => user.region).filter(Boolean))];
+  const uniqueRegions = [
+    ...new Set(users.map((user) => user.region).filter(Boolean)),
+  ];
 
   // Form states
-  const [newProduct, setNewProduct] = useState({ barcode: '', name: '', userId: '' });
+  const [newProduct, setNewProduct] = useState({
+    barcode: "",
+    name: "",
+    userId: "",
+  });
   const [formLoading, setFormLoading] = useState(false);
-  const [formMessage, setFormMessage] = useState({ type: '', text: '' });
+  const [formMessage, setFormMessage] = useState({ type: "", text: "" });
 
   // Configure Axios with token
   const getAuthHeader = () => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem("adminToken");
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('adminToken');
+    const savedToken = localStorage.getItem("adminToken");
     if (savedToken) {
       setIsAuthenticated(true);
       fetchUsers();
@@ -101,32 +112,34 @@ function App() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoginError('');
+    setLoginError("");
     setIsLoginLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/admin-login`, {
         email: loginEmail,
-        password: loginPassword
+        password: loginPassword,
       });
-      localStorage.setItem('adminToken', response.data.token);
+      localStorage.setItem("adminToken", response.data.token);
       setAdminUser(response.data.user);
       setIsAuthenticated(true);
     } catch (err) {
-      setLoginError('Invalid credentials. Please try again.');
+      setLoginError("Invalid credentials. Please try again.");
     } finally {
       setIsLoginLoading(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+    localStorage.removeItem("adminToken");
     setIsAuthenticated(false);
     setAdminUser(null);
   };
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/users`, { headers: getAuthHeader() });
+      const response = await axios.get(`${API_BASE_URL}/users`, {
+        headers: getAuthHeader(),
+      });
       setUsers(response.data);
     } catch (err) {
       if (err.response?.status === 403 || err.response?.status === 401) {
@@ -140,24 +153,31 @@ function App() {
     setError(null);
     try {
       const config = { headers: getAuthHeader() };
-      const userParam = selectedUserId !== 'all' ? `?userId=${selectedUserId}` : '';
-      
-      if (activeTab === 'dashboard') {
+      const userParam =
+        selectedUserId !== "all" ? `?userId=${selectedUserId}` : "";
+
+      if (activeTab === "dashboard") {
         const [invRes, logsRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/inventory`, config),
-          axios.get(`${API_BASE_URL}/stock-logs`, config)
+          axios.get(`${API_BASE_URL}/stock-logs`, config),
         ]);
         setInventory(invRes.data);
         setStockLogs(logsRes.data);
-      } else if (activeTab === 'inventory') {
-        const response = await axios.get(`${API_BASE_URL}/inventory${userParam}`, config);
+      } else if (activeTab === "inventory") {
+        const response = await axios.get(
+          `${API_BASE_URL}/inventory${userParam}`,
+          config,
+        );
         setInventory(response.data);
-      } else if (activeTab === 'logs') {
-        const response = await axios.get(`${API_BASE_URL}/stock-logs${userParam}`, config);
+      } else if (activeTab === "logs") {
+        const response = await axios.get(
+          `${API_BASE_URL}/stock-logs${userParam}`,
+          config,
+        );
         setStockLogs(response.data);
-      } else if (activeTab === 'users' || activeTab === 'map') {
+      } else if (activeTab === "users" || activeTab === "map") {
         fetchUsers();
-      } else if (activeTab === 'analysis') {
+      } else if (activeTab === "analysis") {
         const response = await axios.get(`${API_BASE_URL}/analysis`, config);
         setAnalysisData(response.data);
       }
@@ -165,7 +185,9 @@ function App() {
       if (err.response?.status === 403 || err.response?.status === 401) {
         handleLogout();
       } else {
-        setError('Connection Error: Please ensure the backend server is active.');
+        setError(
+          "Connection Error: Please ensure the backend server is active.",
+        );
       }
     } finally {
       setLoading(false);
@@ -175,20 +197,22 @@ function App() {
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProduct.userId) {
-      setFormMessage({ type: 'error', text: 'Target user is required.' });
+      setFormMessage({ type: "error", text: "Target user is required." });
       return;
     }
     setFormLoading(true);
-    setFormMessage({ type: '', text: '' });
-    
+    setFormMessage({ type: "", text: "" });
+
     try {
-      await axios.post(`${API_BASE_URL}/products`, newProduct, { headers: getAuthHeader() });
-      setFormMessage({ type: 'success', text: 'Product registered!' });
-      setNewProduct({ barcode: '', name: '', userId: '' });
+      await axios.post(`${API_BASE_URL}/products`, newProduct, {
+        headers: getAuthHeader(),
+      });
+      setFormMessage({ type: "success", text: "Product registered!" });
+      setNewProduct({ barcode: "", name: "", userId: "" });
       fetchData();
     } catch (err) {
-      const msg = err.response?.data?.error || 'Registration failed';
-      setFormMessage({ type: 'error', text: msg });
+      const msg = err.response?.data?.error || "Registration failed";
+      setFormMessage({ type: "error", text: msg });
     } finally {
       setFormLoading(false);
     }
@@ -210,8 +234,8 @@ function App() {
               <label>Administrator Email</label>
               <div className="input-with-icon">
                 <UserIcon size={18} />
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   placeholder="admin@retailpro.com"
@@ -224,15 +248,15 @@ function App() {
               <label>Secure Password</label>
               <div className="input-with-icon">
                 <Lock size={18} />
-                <input 
-                  type={showLoginPassword ? "text" : "password"} 
+                <input
+                  type={showLoginPassword ? "text" : "password"}
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="password-toggle"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
                   title={showLoginPassword ? "Hide password" : "Show password"}
@@ -241,20 +265,33 @@ function App() {
                 </button>
               </div>
             </div>
-            <button type="submit" className="login-btn" disabled={isLoginLoading}>
+            <button
+              type="submit"
+              className="login-btn"
+              disabled={isLoginLoading}
+            >
               {isLoginLoading ? (
                 <span className="btn-content">
                   <RefreshCw size={18} className="spin" /> Verifying...
                 </span>
-              ) : 'Secure Login'}
+              ) : (
+                "Secure Login"
+              )}
             </button>
-            <div className="demo-hint" onClick={() => {
-              setLoginEmail('admin@retailpro.com');
-              setLoginPassword('password123');
-            }}>
+            <div
+              className="demo-hint"
+              onClick={() => {
+                setLoginEmail("admin@retailpro.com");
+                setLoginPassword("password123");
+              }}
+            >
               Use Demo Credentials
             </div>
-            {loginError && <div className="message error" style={{marginTop: '1rem'}}>{loginError}</div>}
+            {loginError && (
+              <div className="message error" style={{ marginTop: "1rem" }}>
+                {loginError}
+              </div>
+            )}
           </form>
           <div className="login-footer">
             <p>© 2026 RetailPro Systems. All rights reserved.</p>
@@ -273,44 +310,44 @@ function App() {
           <h1>RetailPro</h1>
         </div>
         <nav>
-          <button 
-            className={activeTab === 'dashboard' ? 'active' : ''} 
-            onClick={() => setActiveTab('dashboard')}
+          <button
+            className={activeTab === "dashboard" ? "active" : ""}
+            onClick={() => setActiveTab("dashboard")}
           >
             <LayoutDashboard size={20} />
             Dashboard
           </button>
-          <button 
-            className={activeTab === 'inventory' ? 'active' : ''} 
-            onClick={() => setActiveTab('inventory')}
+          <button
+            className={activeTab === "inventory" ? "active" : ""}
+            onClick={() => setActiveTab("inventory")}
           >
             <Package size={20} />
             Inventory
           </button>
-          <button 
-            className={activeTab === 'logs' ? 'active' : ''} 
-            onClick={() => setActiveTab('logs')}
+          <button
+            className={activeTab === "logs" ? "active" : ""}
+            onClick={() => setActiveTab("logs")}
           >
             <History size={20} />
             Activity
           </button>
-          <button 
-            className={activeTab === 'users' ? 'active' : ''} 
-            onClick={() => setActiveTab('users')}
+          <button
+            className={activeTab === "users" ? "active" : ""}
+            onClick={() => setActiveTab("users")}
           >
             <Users size={20} />
             Partners
           </button>
-          <button 
-            className={activeTab === 'map' ? 'active' : ''} 
-            onClick={() => setActiveTab('map')}
+          <button
+            className={activeTab === "map" ? "active" : ""}
+            onClick={() => setActiveTab("map")}
           >
             <MapIcon size={20} />
             Network
           </button>
-          <button 
-            className={activeTab === 'analysis' ? 'active' : ''} 
-            onClick={() => setActiveTab('analysis')}
+          <button
+            className={activeTab === "analysis" ? "active" : ""}
+            onClick={() => setActiveTab("analysis")}
           >
             <BarChart3 size={20} />
             Analysis
@@ -319,14 +356,18 @@ function App() {
 
         <div className="sidebar-footer">
           <div className="filter-section">
-            <label><Filter size={14} /> Context Switch</label>
-            <select 
-              value={selectedUserId} 
+            <label>
+              <Filter size={14} /> Context Switch
+            </label>
+            <select
+              value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
             >
               <option value="all">Global View</option>
-              {users.map(user => (
-                <option key={user.id} value={user.id}>{user.name}</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
               ))}
             </select>
           </div>
@@ -341,16 +382,20 @@ function App() {
       <main className="content">
         <header className="top-bar">
           <h2>
-            {activeTab === 'dashboard' && 'System Overview'}
-            {activeTab === 'inventory' && 'Inventory Management'}
-            {activeTab === 'logs' && 'Real-time Activity'}
-            {activeTab === 'users' && 'Partner Network'}
-            {activeTab === 'map' && 'Geographic Distribution'}
-            {activeTab === 'analysis' && 'Performance Analysis'}
+            {activeTab === "dashboard" && "System Overview"}
+            {activeTab === "inventory" && "Inventory Management"}
+            {activeTab === "logs" && "Real-time Activity"}
+            {activeTab === "users" && "Partner Network"}
+            {activeTab === "map" && "Geographic Distribution"}
+            {activeTab === "analysis" && "Performance Analysis"}
           </h2>
           <div className="top-bar-actions">
-            <button className="refresh-btn" onClick={fetchData} title="Refresh Data">
-              <RefreshCw size={20} className={loading ? 'spin' : ''} />
+            <button
+              className="refresh-btn"
+              onClick={fetchData}
+              title="Refresh Data"
+            >
+              <RefreshCw size={20} className={loading ? "spin" : ""} />
             </button>
           </div>
         </header>
@@ -364,9 +409,9 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'dashboard' && (
+        {activeTab === "dashboard" && (
           <div className="dashboard-view">
-             <section className="stats-grid">
+            <section className="stats-grid">
               <div className="stat-card">
                 <Users className="icon-blue" />
                 <div className="stat-info">
@@ -386,7 +431,10 @@ function App() {
                 <div className="stat-info">
                   <span className="label">Total Unit Count</span>
                   <span className="value">
-                    {inventory.reduce((acc, item) => acc + item.current_quantity, 0)}
+                    {inventory.reduce(
+                      (acc, item) => acc + item.current_quantity,
+                      0,
+                    )}
                   </span>
                 </div>
               </div>
@@ -395,7 +443,10 @@ function App() {
             <div className="grid-layout">
               <div className="card">
                 <h3>Recent Activity</h3>
-                <div className="table-container" style={{marginTop: '1.5rem'}}>
+                <div
+                  className="table-container"
+                  style={{ marginTop: "1.5rem" }}
+                >
                   <table className="logs-table">
                     <thead>
                       <tr>
@@ -407,11 +458,15 @@ function App() {
                     <tbody>
                       {stockLogs.slice(0, 5).map((log) => (
                         <tr key={log.id}>
-                          <td style={{fontWeight: 600}}>{log.user.name}</td>
+                          <td style={{ fontWeight: 600 }}>{log.user.name}</td>
                           <td>{log.product.name}</td>
                           <td>
-                            <span className={`change-badge ${log.change_amount >= 0 ? 'plus' : 'minus'}`}>
-                              {log.change_amount >= 0 ? `+${log.change_amount}` : log.change_amount}
+                            <span
+                              className={`change-badge ${log.change_amount >= 0 ? "plus" : "minus"}`}
+                            >
+                              {log.change_amount >= 0
+                                ? `+${log.change_amount}`
+                                : log.change_amount}
                             </span>
                           </td>
                         </tr>
@@ -423,7 +478,10 @@ function App() {
 
               <div className="card">
                 <h3>Stock Alerts</h3>
-                <div className="table-container" style={{marginTop: '1.5rem'}}>
+                <div
+                  className="table-container"
+                  style={{ marginTop: "1.5rem" }}
+                >
                   <table className="inventory-table">
                     <thead>
                       <tr>
@@ -433,17 +491,29 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {inventory.filter(i => i.current_quantity < 20).slice(0, 5).map((item) => (
-                        <tr key={item.id}>
-                          <td className="product-name">{item.product.name}</td>
-                          <td>{item.user.name}</td>
-                          <td>
-                            <span className="qty-badge low">{item.current_quantity}</span>
+                      {inventory
+                        .filter((i) => i.current_quantity < 20)
+                        .slice(0, 5)
+                        .map((item) => (
+                          <tr key={item.id}>
+                            <td className="product-name">
+                              {item.product.name}
+                            </td>
+                            <td>{item.user.name}</td>
+                            <td>
+                              <span className="qty-badge low">
+                                {item.current_quantity}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      {inventory.filter((i) => i.current_quantity < 20)
+                        .length === 0 && (
+                        <tr>
+                          <td colSpan="3" className="empty-state">
+                            All systems optimal. No low stock detected.
                           </td>
                         </tr>
-                      ))}
-                      {inventory.filter(i => i.current_quantity < 20).length === 0 && (
-                        <tr><td colSpan="3" className="empty-state">All systems optimal. No low stock detected.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -453,7 +523,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'inventory' && (
+        {activeTab === "inventory" && (
           <div className="inventory-view">
             <section className="stats-grid">
               <div className="stat-card">
@@ -468,7 +538,10 @@ function App() {
                 <div className="stat-info">
                   <span className="label">Current Aggregate</span>
                   <span className="value">
-                    {inventory.reduce((acc, item) => acc + item.current_quantity, 0)}
+                    {inventory.reduce(
+                      (acc, item) => acc + item.current_quantity,
+                      0,
+                    )}
                   </span>
                 </div>
               </div>
@@ -476,47 +549,64 @@ function App() {
 
             <div className="grid-layout">
               <div className="card add-form">
-                <h3><PlusCircle size={22} /> New Product Registration</h3>
+                <h3>
+                  <PlusCircle size={22} /> New Product Registration
+                </h3>
                 <form onSubmit={handleAddProduct}>
                   <div className="form-group">
                     <label>Assign to Partner</label>
-                    <select 
+                    <select
                       value={newProduct.userId}
-                      onChange={(e) => setNewProduct({...newProduct, userId: e.target.value})}
+                      onChange={(e) =>
+                        setNewProduct({ ...newProduct, userId: e.target.value })
+                      }
                       required
                     >
                       <option value="">Select Target...</option>
-                      {users.map(user => (
-                        <option key={user.id} value={user.id}>{user.name}</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div className="form-group">
                     <label>Product Identity (Barcode)</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="Scan or type barcode"
                       value={newProduct.barcode}
-                      onChange={(e) => setNewProduct({...newProduct, barcode: e.target.value})}
+                      onChange={(e) =>
+                        setNewProduct({
+                          ...newProduct,
+                          barcode: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
                   <div className="form-group">
                     <label>Commercial Name</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="e.g. Premium Blend 250g"
                       value={newProduct.name}
-                      onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                      onChange={(e) =>
+                        setNewProduct({ ...newProduct, name: e.target.value })
+                      }
                       required
                     />
                   </div>
                   <button type="submit" disabled={formLoading}>
-                    {formLoading ? 'Processing...' : 'Complete Registration'}
+                    {formLoading ? "Processing..." : "Complete Registration"}
                   </button>
                   {formMessage.text && (
                     <div className={`message ${formMessage.type}`}>
-                      {formMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                      {formMessage.type === "success" ? (
+                        <CheckCircle2 size={18} />
+                      ) : (
+                        <AlertCircle size={18} />
+                      )}
                       {formMessage.text}
                     </div>
                   )}
@@ -536,15 +626,25 @@ function App() {
                   <tbody>
                     {inventory.map((item) => (
                       <tr key={item.id}>
-                        <td><span className="product-name">{item.product.name}</span></td>
-                        <td><code className="barcode">{item.product.barcode}</code></td>
+                        <td>
+                          <span className="product-name">
+                            {item.product.name}
+                          </span>
+                        </td>
+                        <td>
+                          <code className="barcode">
+                            {item.product.barcode}
+                          </code>
+                        </td>
                         <td>
                           <div className="owner-tag">
                             <UserIcon size={14} /> {item.user.name}
                           </div>
                         </td>
                         <td>
-                          <span className={`qty-badge ${item.current_quantity < 5 ? 'low' : ''}`}>
+                          <span
+                            className={`qty-badge ${item.current_quantity < 5 ? "low" : ""}`}
+                          >
                             {item.current_quantity}
                           </span>
                         </td>
@@ -557,7 +657,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'logs' && (
+        {activeTab === "logs" && (
           <div className="logs-view card table-container">
             <table className="logs-table">
               <thead>
@@ -573,14 +673,25 @@ function App() {
                 {stockLogs.map((log) => (
                   <tr key={log.id}>
                     <td>{new Date(log.timestamp).toLocaleString()}</td>
-                    <td>{log.product.name} <br/><small className="text-muted">{log.product.barcode}</small></td>
-                    <td style={{fontWeight: 600}}>{log.user.name}</td>
                     <td>
-                      <span className={`change-badge ${log.change_amount >= 0 ? 'plus' : 'minus'}`}>
-                        {log.change_amount >= 0 ? `+${log.change_amount}` : log.change_amount}
+                      {log.product.name} <br />
+                      <small className="text-muted">
+                        {log.product.barcode}
+                      </small>
+                    </td>
+                    <td style={{ fontWeight: 600 }}>{log.user.name}</td>
+                    <td>
+                      <span
+                        className={`change-badge ${log.change_amount >= 0 ? "plus" : "minus"}`}
+                      >
+                        {log.change_amount >= 0
+                          ? `+${log.change_amount}`
+                          : log.change_amount}
                       </span>
                     </td>
-                    <td><span className="reason-tag">{log.reason}</span></td>
+                    <td>
+                      <span className="reason-tag">{log.reason}</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -588,7 +699,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'users' && (
+        {activeTab === "users" && (
           <div className="users-view card table-container">
             <table className="users-table">
               <thead>
@@ -605,17 +716,22 @@ function App() {
                     <td className="product-name">{user.name}</td>
                     <td>{user.email}</td>
                     <td>
-                      <div className="location-cell" onClick={() => {
-                        setMapCenter([user.latitude, user.longitude]);
-                        setMapRegionFilter('all');
-                        setMapShopFilter(user.id.toString());
-                        setActiveTab('map');
-                      }}>
-                        <MapPin size={14} /> {user.region || 'Default'}
+                      <div
+                        className="location-cell"
+                        onClick={() => {
+                          setMapCenter([user.latitude, user.longitude]);
+                          setMapRegionFilter("all");
+                          setMapShopFilter(user.id.toString());
+                          setActiveTab("map");
+                        }}
+                      >
+                        <MapPin size={14} /> {user.region || "Default"}
                       </div>
                     </td>
                     <td>
-                      <span className="qty-badge">{user._count.products} Items</span>
+                      <span className="qty-badge">
+                        {user._count.products} Items
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -624,44 +740,57 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'map' && (
+        {activeTab === "map" && (
           <div className="map-view">
             <div className="map-toolbar card">
               <div className="filter-group">
-                <label><MapPin size={18} /> Zone Filter</label>
-                <select 
+                <label>
+                  <MapPin size={18} /> Zone Filter
+                </label>
+                <select
                   value={mapRegionFilter}
                   onChange={(e) => {
                     setMapRegionFilter(e.target.value);
-                    setMapShopFilter('all');
+                    setMapShopFilter("all");
                   }}
                 >
                   <option value="all">Everywhere</option>
-                  {uniqueRegions.map(region => (
-                    <option key={region} value={region}>{region}</option>
+                  {uniqueRegions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="filter-group">
-                <label><ShoppingCart size={18} /> Enterprise</label>
-                <select 
+                <label>
+                  <ShoppingCart size={18} /> Enterprise
+                </label>
+                <select
                   value={mapShopFilter}
                   onChange={(e) => {
                     const shopId = e.target.value;
                     setMapShopFilter(shopId);
-                    if (shopId !== 'all') {
-                      const shop = users.find(u => u.id.toString() === shopId);
+                    if (shopId !== "all") {
+                      const shop = users.find(
+                        (u) => u.id.toString() === shopId,
+                      );
                       if (shop) setMapCenter([shop.latitude, shop.longitude]);
                     }
                   }}
                 >
                   <option value="all">All Partners</option>
                   {users
-                    .filter(u => mapRegionFilter === 'all' || u.region === mapRegionFilter)
-                    .map(user => (
-                      <option key={user.id} value={user.id}>{user.name}</option>
-                    ))
-                  }
+                    .filter(
+                      (u) =>
+                        mapRegionFilter === "all" ||
+                        u.region === mapRegionFilter,
+                    )
+                    .map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div className="results-count">
@@ -670,21 +799,31 @@ function App() {
             </div>
 
             <div className="card map-card">
-              <Map height={600} center={mapCenter} zoom={mapShopFilter !== 'all' ? 16 : 13}>
-                {filteredMapUsers.map(user => user.latitude && user.longitude && (
-                  <Marker 
-                    key={user.id}
-                    anchor={[user.latitude, user.longitude]} 
-                    payload={user}
-                    onClick={({ payload }) => alert(`${payload.name}\n${payload.region} Node`)}
-                  />
-                ))}
+              <Map
+                height={600}
+                center={mapCenter}
+                zoom={mapShopFilter !== "all" ? 16 : 13}
+              >
+                {filteredMapUsers.map(
+                  (user) =>
+                    user.latitude &&
+                    user.longitude && (
+                      <Marker
+                        key={user.id}
+                        anchor={[user.latitude, user.longitude]}
+                        payload={user}
+                        onClick={({ payload }) =>
+                          alert(`${payload.name}\n${payload.region} Node`)
+                        }
+                      />
+                    ),
+                )}
               </Map>
             </div>
           </div>
         )}
 
-        {activeTab === 'analysis' && (
+        {activeTab === "analysis" && (
           <div className="analysis-view">
             <section className="stats-grid">
               <div className="stat-card">
@@ -692,7 +831,10 @@ function App() {
                 <div className="stat-info">
                   <span className="label">Total Unit Sales</span>
                   <span className="value">
-                    {filteredAnalysis.reduce((acc, item) => acc + item.totalSales, 0)}
+                    {filteredAnalysis.reduce(
+                      (acc, item) => acc + item.totalSales,
+                      0,
+                    )}
                   </span>
                 </div>
               </div>
@@ -701,9 +843,14 @@ function App() {
                 <div className="stat-info">
                   <span className="label">Avg Turnover</span>
                   <span className="value">
-                    {filteredAnalysis.length > 0 
-                      ? (filteredAnalysis.reduce((acc, item) => acc + parseFloat(item.turnoverRate), 0) / filteredAnalysis.length).toFixed(2)
-                      : '0.00'}
+                    {filteredAnalysis.length > 0
+                      ? (
+                          filteredAnalysis.reduce(
+                            (acc, item) => acc + parseFloat(item.turnoverRate),
+                            0,
+                          ) / filteredAnalysis.length
+                        ).toFixed(2)
+                      : "0.00"}
                   </span>
                 </div>
               </div>
@@ -711,28 +858,36 @@ function App() {
                 <MapPin className="icon-orange" />
                 <div className="stat-info">
                   <span className="label">Regions Active</span>
-                  <span className="value">{[...new Set(filteredAnalysis.map(i => i.region))].length}</span>
+                  <span className="value">
+                    {[...new Set(filteredAnalysis.map((i) => i.region))].length}
+                  </span>
                 </div>
               </div>
             </section>
 
             <div className="analysis-toolbar card">
               <div className="filter-group">
-                <label><Filter size={14} /> Region</label>
-                <select 
+                <label>
+                  <Filter size={14} /> Region
+                </label>
+                <select
                   value={analysisRegionFilter}
                   onChange={(e) => setAnalysisRegionFilter(e.target.value)}
                 >
                   <option value="all">All Regions</option>
-                  {uniqueRegions.map(region => (
-                    <option key={region} value={region}>{region}</option>
+                  {uniqueRegions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
                   ))}
                 </select>
               </div>
-              <div className="filter-group" style={{flex: 1}}>
-                <label><Package size={14} /> Search</label>
-                <input 
-                  type="text" 
+              <div className="filter-group" style={{ flex: 1 }}>
+                <label>
+                  <Package size={14} /> Search
+                </label>
+                <input
+                  type="text"
                   placeholder="Filter product or shop..."
                   value={analysisSearch}
                   onChange={(e) => setAnalysisSearch(e.target.value)}
@@ -764,17 +919,26 @@ function App() {
                         <br />
                         <small className="text-muted">at {item.shopName}</small>
                       </td>
-                      <td><span className="reason-tag">{item.region}</span></td>
                       <td>
-                        <span className={`qty-badge ${item.currentStock < 10 ? 'low' : ''}`}>
+                        <span className="reason-tag">{item.region}</span>
+                      </td>
+                      <td>
+                        <span
+                          className={`qty-badge ${item.currentStock < 10 ? "low" : ""}`}
+                        >
                           {item.currentStock}
                         </span>
                       </td>
                       <td>
-                        <span className="change-badge plus">{item.totalSales}</span>
+                        <span className="change-badge plus">
+                          {item.totalSales}
+                        </span>
                       </td>
                       <td>
-                        <span className="change-badge" style={{color: 'var(--status-info)'}}>
+                        <span
+                          className="change-badge"
+                          style={{ color: "var(--status-info)" }}
+                        >
                           {item.totalRestocks}
                         </span>
                       </td>
@@ -800,7 +964,9 @@ function App() {
                   ))}
                   {filteredAnalysis.length === 0 && !loading && (
                     <tr>
-                      <td colSpan="7" className="empty-state">No performance data matches your current filters.</td>
+                      <td colSpan="7" className="empty-state">
+                        No performance data matches your current filters.
+                      </td>
                     </tr>
                   )}
                 </tbody>
